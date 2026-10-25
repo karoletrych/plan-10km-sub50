@@ -42,6 +42,7 @@
   state.strava.activities = mergePinned(state.strava.activities);
   let auth = loadAuth();
   let syncing = false;
+  let syncError = "";
 
   function loadState() {
     try {
@@ -299,7 +300,7 @@
             <span class="week-head">
               <span class="week-title">${esc(week.title)}</span>
               <span class="week-sub">
-                ${esc(week.volume)}
+                ${esc(week.volume)}${/^ok\./i.test(week.volume) ? " łącznie" : ""}
                 ${isCurrent ? '<span class="now-tag">Teraz</span>' : ""}
               </span>
             </span>
@@ -471,7 +472,7 @@
     return `<div class="recent-item">
       <div class="ri-main">
         <div class="ri-name">${esc(activity.name || "Bieg")}</div>
-        <div class="ri-meta">${esc(meta)}${activity.distance ? "" : " · staty po połączeniu"}</div>
+        <div class="ri-meta">${esc(meta)}${activity.distance ? "" : (isConnected() ? " · staty po synchronizacji" : " · staty po połączeniu")}</div>
       </div>
       <a href="https://www.strava.com/activities/${esc(activity.id)}" target="_blank" rel="noopener">↗</a>
     </div>`;
@@ -626,6 +627,8 @@
     const name = [athlete.firstname, athlete.lastname].filter(Boolean).join(" ") || "Twoje konto";
     info.textContent = lastSyncText();
     const recent = state.strava.activities.slice(0, 4);
+    const latest = state.strava.activities.find((a) => a.distance && a.moving_time) || null;
+    const latestDate = latest ? parseISODate(activityDate(latest)) : null;
 
     panel.innerHTML = `
       <div class="sp-row">
@@ -638,6 +641,21 @@
           ${syncing ? "Synchronizuję…" : "Synchronizuj"}
         </button>
       </div>
+      ${syncError ? `<p class="warn" style="margin-top:10px">${esc(syncError)}</p>` : ""}
+      ${latest ? `<div class="sp-last">
+        <div class="sp-recent-head">
+          <span>Ostatni bieg ze Stravy</span>
+          <a href="https://www.strava.com/activities/${esc(latest.id)}" target="_blank" rel="noopener">Otwórz ↗</a>
+        </div>
+        <div class="sp-last-name">${esc(latest.name || "Bieg")}${latestDate ? " · " + esc(dateFmt.format(latestDate)) : ""}</div>
+        <div class="sa-stats">
+          <div class="sa-stat"><span>Dystans</span><strong>${esc(fmtKm(latest.distance))}</strong></div>
+          <div class="sa-stat"><span>Czas</span><strong>${esc(fmtDuration(latest.moving_time))}</strong></div>
+          <div class="sa-stat"><span>Tempo</span><strong>${esc(fmtPace(activityPace(latest)))}\u00A0/km</strong></div>
+        </div>
+      </div>` : '<p class="empty-note" style="margin-top:12px">Brak pobranych biegów ze Stravy. Kliknij „Synchronizuj”.</p>'}
+      ${!state.start ? `<p class="sp-hint">Ustaw datę startu, żeby biegi automatycznie dopasowały się do treningów.
+        <button type="button" class="text-btn" data-strava="start">Ustaw datę</button></p>` : ""}
       <div class="sp-recent">
         <div class="sp-recent-head"><span>Ostatnie biegi</span><button type="button" class="text-btn" data-strava="settings">Ustawienia</button></div>
         ${recent.length ? `<div class="recent-list">${recent.map(recentItemHTML).join("")}</div>` : '<p class="empty-note">Brak pobranych biegów. Kliknij „Synchronizuj”.</p>'}
@@ -853,6 +871,7 @@
     renderStravaPanel();
     try {
       const fresh = await fetchActivities();
+      syncError = "";
       const known = new Set(state.strava.activities.map((a) => String(a.id)));
       const added = fresh.filter((a) => !known.has(String(a.id)));
       state.strava = { fetchedAt: Date.now(), activities: mergePinned(fresh) };
@@ -886,7 +905,8 @@
       }
     } catch (err) {
       console.error(err);
-      toast(err.message || "Nie udało się pobrać danych ze Stravy.");
+      syncError = err.message || "Nie udało się pobrać danych ze Stravy.";
+      toast(syncError);
       if (String(err.message || "").toLowerCase().includes("token")) {
         saveAuth(Object.assign({}, auth, { accessToken: null, expiresAt: 0 }));
       }
@@ -1222,6 +1242,15 @@
     }
     if (action === "authorize") return authorize();
     if (action === "sync") return syncActivities();
+    if (action === "start") {
+      const input = $("#start-date");
+      input.scrollIntoView({ behavior: "smooth", block: "center" });
+      input.focus();
+      if (typeof input.showPicker === "function") {
+        try { input.showPicker(); } catch (err) { /* przeglądarka może zablokować */ }
+      }
+      return;
+    }
     if (action === "settings") {
       openDialog($("#strava-dialog"));
       renderStravaDialog();
@@ -1285,8 +1314,10 @@
 
     handleOAuthCallback();
 
-    if (isConnected() && Date.now() - (state.strava.fetchedAt || 0) > 1000 * 60 * 30) {
-      syncActivities({ silent: true });
+    if (isConnected()) {
+      const hasStats = state.strava.activities.some((a) => a.distance && a.moving_time);
+      const stale = Date.now() - (state.strava.fetchedAt || 0) > 1000 * 60 * 30;
+      if (!hasStats || stale) syncActivities({ silent: true });
     }
 
     if ("serviceWorker" in navigator && location.protocol === "https:") {
