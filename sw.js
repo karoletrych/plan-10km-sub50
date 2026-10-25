@@ -1,10 +1,10 @@
-const CACHE = "plan10k-v3";
+const CACHE = "plan10k-v4";
 const ASSETS = [
   "./",
   "./index.html",
-  "./assets/styles.css",
-  "./assets/plan.js",
-  "./assets/app.js",
+  "./assets/styles.css?v=4",
+  "./assets/plan.js?v=4",
+  "./assets/app.js?v=4",
   "./assets/icon.svg",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
@@ -32,16 +32,18 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== location.origin) return;
 
+  // Nie cache'uj adresów powrotu z OAuth (kod jest jednorazowy).
+  const isOAuthCallback = url.searchParams.has("code") || url.searchParams.has("state");
+
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (response && response.ok) {
+    fetch(request)
+      .then((response) => {
+        if (response && response.ok && !isOAuthCallback) {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copy));
         }
         return response;
-      });
-    }).catch(() => caches.match("./index.html"))
+      })
+      .catch(() => caches.match(request).then((cached) => cached || caches.match("./index.html")))
   );
 });
