@@ -627,6 +627,11 @@
     const name = [athlete.firstname, athlete.lastname].filter(Boolean).join(" ") || "Twoje konto";
     info.textContent = lastSyncText();
     const recent = state.strava.activities.slice(0, 4);
+    const scopeOk = !auth.scope || /activity:read/.test(auth.scope);
+    const needsReconnect = !scopeOk || /dostęp do aktywności|forbidden|authorization/i.test(syncError);
+    const problem = !scopeOk && !syncError
+      ? "Strava nie przyznała dostępu do aktywności. Połącz ponownie i zaznacz zgodę."
+      : syncError;
 
     panel.innerHTML = `
       <div class="sp-row">
@@ -639,7 +644,10 @@
           ${syncing ? "Synchronizuję…" : "Synchronizuj"}
         </button>
       </div>
-      ${syncError ? `<p class="warn" style="margin-top:10px">${esc(syncError)}</p>` : ""}
+      ${problem ? `<div class="warn" style="margin-top:10px">
+        <div>${esc(problem)}</div>
+        ${needsReconnect ? '<button type="button" class="btn btn-primary" style="margin-top:8px" data-strava="reconnect">Połącz ponownie</button>' : ""}
+      </div>` : ""}
       ${!state.start ? `<p class="sp-hint">Ustaw datę startu, żeby biegi automatycznie dopasowały się do treningów.
         <button type="button" class="text-btn" data-strava="start">Ustaw datę</button></p>` : ""}
       <div class="sp-recent">
@@ -717,7 +725,7 @@
     beginAuth(id, secret);
   }
 
-  function beginAuth(id, secret) {
+  function beginAuth(id, secret, force) {
     if (!id || !/^\d+$/.test(String(id).trim())) {
       toast("Podaj poprawny Client ID (same cyfry).");
       return;
@@ -733,7 +741,7 @@
       client_id: auth.clientId,
       redirect_uri: redirectUri(),
       response_type: "code",
-      approval_prompt: "auto",
+      approval_prompt: force ? "force" : "auto",
       scope: "read,activity:read_all",
       state: oauthState
     });
@@ -782,6 +790,7 @@
       accessToken: data.access_token,
       refreshToken: data.refresh_token || auth.refreshToken,
       expiresAt: data.expires_at,
+      scope: data.scope || auth.scope,
       athlete: data.athlete || auth.athlete
     }));
     return auth.accessToken;
@@ -825,7 +834,9 @@
       }
       if (!res.ok) {
         const detail = await res.json().catch(() => ({}));
-        throw new Error(detail.message || "Strava API zwróciło błąd " + res.status + ".");
+        const err = new Error(detail.message || "Strava API zwróciło błąd " + res.status + ".");
+        err.status = res.status;
+        throw err;
       }
       const batch = await res.json();
       if (!Array.isArray(batch)) break;
@@ -891,7 +902,10 @@
       }
     } catch (err) {
       console.error(err);
-      syncError = err.message || "Nie udało się pobrać danych ze Stravy.";
+      const denied = err.status === 403 || /forbidden|authorization|permission/i.test(String(err.message || ""));
+      syncError = denied
+        ? "Strava nie dała dostępu do aktywności. Połącz ponownie i zaznacz zgodę na dostęp do aktywności."
+        : (err.message || "Nie udało się pobrać danych ze Stravy.");
       toast(syncError);
       if (String(err.message || "").toLowerCase().includes("token")) {
         saveAuth(Object.assign({}, auth, { accessToken: null, expiresAt: 0 }));
@@ -934,6 +948,7 @@
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
         expiresAt: data.expires_at,
+        scope: data.scope || auth.scope,
         athlete: data.athlete
       }));
       toast("Połączono ze Stravą. Pobieram aktywności…");
@@ -1228,6 +1243,15 @@
     }
     if (action === "authorize") return authorize();
     if (action === "sync") return syncActivities();
+    if (action === "reconnect") {
+      if (auth && auth.clientId && auth.clientSecret) {
+        beginAuth(auth.clientId, auth.clientSecret, true);
+      } else {
+        openDialog($("#strava-dialog"));
+        renderStravaDialog("Połącz Stravę ponownie, żeby przyznać dostęp do aktywności.");
+      }
+      return;
+    }
     if (action === "start") {
       const input = $("#start-date");
       input.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1280,7 +1304,7 @@
       toast("Nieprawidłowe dane aplikacji Strava w linku.");
       return false;
     }
-    beginAuth(clientId, clientSecret);
+    beginAuth(clientId, clientSecret, true);
     return true;
   }
 
