@@ -627,8 +627,6 @@
     const name = [athlete.firstname, athlete.lastname].filter(Boolean).join(" ") || "Twoje konto";
     info.textContent = lastSyncText();
     const recent = state.strava.activities.slice(0, 4);
-    const latest = state.strava.activities.find((a) => a.distance && a.moving_time) || null;
-    const latestDate = latest ? parseISODate(activityDate(latest)) : null;
 
     panel.innerHTML = `
       <div class="sp-row">
@@ -642,18 +640,6 @@
         </button>
       </div>
       ${syncError ? `<p class="warn" style="margin-top:10px">${esc(syncError)}</p>` : ""}
-      ${latest ? `<div class="sp-last">
-        <div class="sp-recent-head">
-          <span>Ostatni bieg ze Stravy</span>
-          <a href="https://www.strava.com/activities/${esc(latest.id)}" target="_blank" rel="noopener">Otwórz ↗</a>
-        </div>
-        <div class="sp-last-name">${esc(latest.name || "Bieg")}${latestDate ? " · " + esc(dateFmt.format(latestDate)) : ""}</div>
-        <div class="sa-stats">
-          <div class="sa-stat"><span>Dystans</span><strong>${esc(fmtKm(latest.distance))}</strong></div>
-          <div class="sa-stat"><span>Czas</span><strong>${esc(fmtDuration(latest.moving_time))}</strong></div>
-          <div class="sa-stat"><span>Tempo</span><strong>${esc(fmtPace(activityPace(latest)))}\u00A0/km</strong></div>
-        </div>
-      </div>` : '<p class="empty-note" style="margin-top:12px">Brak pobranych biegów ze Stravy. Kliknij „Synchronizuj”.</p>'}
       ${!state.start ? `<p class="sp-hint">Ustaw datę startu, żeby biegi automatycznie dopasowały się do treningów.
         <button type="button" class="text-btn" data-strava="start">Ustaw datę</button></p>` : ""}
       <div class="sp-recent">
