@@ -1,0 +1,32 @@
+{
+  "name": "10 km sub 50 — plan treningowy",
+  "short_name": "10K sub 50",
+  "description": "9-tygodniowy plan na 10 km poniżej 50 minut z czwartkową ścianką i statami ze Stravy.",
+  "lang": "pl-PL",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0d12",
+  "theme_color": "#111319",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

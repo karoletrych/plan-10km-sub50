@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>10 km sub 50 — plan treningowy</title>
+  <meta name="description" content="9-tygodniowy plan treningowy na 10 km poniżej 50 minut, z czwartkową ścianką i podpiętymi aktywnościami ze Stravy.">
+  <meta name="theme-color" content="#111319">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="10K sub 50">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <div class="hero-top">
+          <span class="hero-pill">Plan treningowy</span>
+          <span class="hero-badge">9 tygodni</span>
+        </div>
+        <h1>10 km <span>sub 50:00</span></h1>
+        <p class="hero-sub">Trzy biegi w tygodniu, czwartkowa ścianka i miejsce na regenerację.</p>
+
+        <div class="progress-card">
+          <div class="pc-top">
+            <span id="progress-text">0 z 27 treningów</span>
+            <strong id="progress-pct">0%</strong>
+          </div>
+          <div class="bar" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="27" aria-valuenow="0">
+            <i id="bar-fill"></i>
+          </div>
+          <div class="pc-bottom">
+            <div id="week-now" class="week-now">Ustaw datę startu planu</div>
+            <label class="start-field">
+              <span>Start</span>
+              <input type="date" id="start-date" aria-label="Data startu planu">
+            </label>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="section" aria-labelledby="strava-h">
+        <div class="section-head">
+          <h2 id="strava-h"><span class="strava-word">Strava</span></h2>
+          <span class="muted" id="strava-sync-info"></span>
+        </div>
+        <div class="card strava-panel" id="strava-panel"></div>
+      </section>
+
+      <section class="section" aria-labelledby="paces-h">
+        <div class="section-head">
+          <h2 id="paces-h">Tempa</h2>
+          <span class="muted">orientacyjnie</span>
+        </div>
+        <div class="pace-grid" id="paces"></div>
+      </section>
+
+      <section class="section" aria-labelledby="schedule-h">
+        <div class="section-head">
+          <h2 id="schedule-h">Tydzień w skrócie</h2>
+          <span class="muted">Pn–Nd</span>
+        </div>
+        <div class="week-strip" id="schedule"></div>
+      </section>
+
+      <section class="section" aria-labelledby="weeks-h">
+        <div class="section-head">
+          <h2 id="weeks-h">Plan tydzień po tygodniu</h2>
+          <button type="button" class="text-btn" id="toggle-all">Rozwiń wszystko</button>
+        </div>
+        <div class="weeks" id="weeks"></div>
+      </section>
+
+      <section class="section">
+        <div class="card rules-card">
+          <h2>Zasady, których nie negocjujemy</h2>
+          <ul id="rules" class="rules-list"></ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="card recovery-card">
+          <h2>Regeneracja po ściance</h2>
+          <ul id="recovery" class="rules-list"></ul>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p class="outro" id="outro"></p>
+        <div class="footer-actions">
+          <button type="button" class="btn btn-ghost" data-action="export">Eksport danych</button>
+          <button type="button" class="btn btn-ghost" data-action="import">Import</button>
+          <button type="button" class="btn btn-ghost danger" data-action="reset">Wyczyść dane</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </div>
+        <p class="local-note" id="storage-note">Dane treningowe zapisują się lokalnie w tej przeglądarce (localStorage).</p>
+      </footer>
+    </main>
+  </div>
+
+  <dialog id="strava-dialog" class="dialog">
+    <div class="dialog-head">
+      <h3>Strava</h3>
+      <button type="button" class="icon-btn" data-close aria-label="Zamknij">✕</button>
+    </div>
+    <div class="dialog-body" id="strava-dialog-body"></div>
+  </dialog>
+
+  <dialog id="link-dialog" class="dialog">
+    <div class="dialog-head">
+      <h3 id="link-dialog-title">Aktywność Strava</h3>
+      <button type="button" class="icon-btn" data-close aria-label="Zamknij">✕</button>
+    </div>
+    <div class="dialog-body" id="link-dialog-body"></div>
+  </dialog>
+
+  <dialog id="embed-dialog" class="dialog embed-dialog">
+    <div class="dialog-head">
+      <h3>Aktywność Strava</h3>
+      <button type="button" class="icon-btn" data-close aria-label="Zamknij">✕</button>
+    </div>
+    <div class="dialog-body embed-body" id="embed-dialog-body"></div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="assets/plan.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
