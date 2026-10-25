@@ -1142,6 +1142,18 @@ a { color: inherit; }
   line-height: 1.45;
 }
 
+.sp-diag {
+  margin-top: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .64rem;
+  line-height: 1.4;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.warn a.text-btn { text-decoration: underline; }
+.sp-actions a.text-btn { color: var(--accent); }
+
 .status-line {
   display: flex;
   align-items: center;

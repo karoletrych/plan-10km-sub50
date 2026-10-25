@@ -43,6 +43,7 @@
   let auth = loadAuth();
   let syncing = false;
   let syncError = "";
+  let lastSyncDebug = null;
 
   function loadState() {
     try {
@@ -677,10 +678,13 @@
     const recent = state.strava.activities.slice(0, 4);
     const withStats = state.strava.activities.filter((a) => a.distance && a.moving_time).length;
     const scopeOk = !auth.scope || /activity:read/.test(auth.scope);
-    const needsReconnect = !scopeOk || /dostęp do aktywności|forbidden|authorization/i.test(syncError);
+    const needsReconnect = !scopeOk || /dostęp do aktywności|odrzuciła|wygasł|403|401|forbidden|authorization/i.test(syncError);
     const problem = !scopeOk && !syncError
       ? "Strava nie przyznała dostępu do aktywności. Połącz ponownie i zaznacz zgodę."
       : syncError;
+    const diag = lastSyncDebug
+      ? `<div class="sp-diag">HTTP ${esc(lastSyncDebug.status || "?")}${lastSyncDebug.body ? " · " + esc(lastSyncDebug.body) : ""}<br>scope: ${esc(lastSyncDebug.scope || "brak")} · ${esc(lastSyncDebug.at)}</div>`
+      : "";
 
     panel.innerHTML = `
       <div class="sp-row">
@@ -695,7 +699,12 @@
       </div>
       ${problem ? `<div class="warn" style="margin-top:10px">
         <div>${esc(problem)}</div>
-        ${needsReconnect ? '<button type="button" class="btn btn-primary" style="margin-top:8px" data-strava="reconnect">Połącz ponownie</button>' : ""}
+        ${diag}
+        <div class="sp-actions" style="margin-top:8px">
+          ${needsReconnect ? '<button type="button" class="btn btn-primary" data-strava="reconnect">Połącz ponownie</button>' : ""}
+          ${lastSyncDebug ? '<button type="button" class="text-btn" data-strava="copy-diag">Kopiuj diagnostykę</button>' : ""}
+          <a class="text-btn" href="https://www.strava.com/settings/apps" target="_blank" rel="noopener">Aplikacje w Stravie ↗</a>
+        </div>
       </div>` : ""}
       ${!state.start ? `<p class="sp-hint">Ustaw datę startu, żeby biegi automatycznie dopasowały się do treningów.
         <button type="button" class="text-btn" data-strava="start">Ustaw datę</button></p>` : ""}
@@ -882,9 +891,13 @@
         res = await fetch(url, { headers: { Authorization: "Bearer " + token } });
       }
       if (!res.ok) {
-        const detail = await res.json().catch(() => ({}));
+        const raw = await res.text().catch(() => "");
+        let detail = {};
+        try { detail = JSON.parse(raw); } catch (e) { detail = {}; }
         const err = new Error(detail.message || "Strava API zwróciło błąd " + res.status + ".");
         err.status = res.status;
+        err.body = raw.slice(0, 400);
+        err.requestUrl = url;
         throw err;
       }
       const batch = await res.json();
@@ -918,6 +931,7 @@
     try {
       const fresh = await fetchActivities();
       syncError = "";
+      lastSyncDebug = null;
       const known = new Set(state.strava.activities.map((a) => String(a.id)));
       const added = fresh.filter((a) => !known.has(String(a.id)));
       // Nie gub statów wpisanych ręcznie, jeśli API ich nie zwróci.
@@ -965,10 +979,27 @@
       }
     } catch (err) {
       console.error(err);
-      const denied = err.status === 403 || /forbidden|authorization|permission/i.test(String(err.message || ""));
-      syncError = denied
-        ? "Strava nie dała dostępu do aktywności. Połącz ponownie i zaznacz zgodę na dostęp do aktywności."
-        : (err.message || "Nie udało się pobrać danych ze Stravy.");
+      const status = err.status || 0;
+      const scope = (auth && auth.scope) || "";
+      const hasScope = /activity:read/.test(scope);
+      lastSyncDebug = {
+        status,
+        body: err.body || "",
+        scope,
+        requestUrl: err.requestUrl || "",
+        at: new Date().toISOString()
+      };
+      if (status === 401) {
+        syncError = "Token Stravy wygasł lub został unieważniony. Połącz ponownie.";
+      } else if (status === 403 && !hasScope) {
+        syncError = "Strava nie przyznała dostępu do aktywności. Połącz ponownie i zaznacz zgodę na aktywności.";
+      } else if (status === 403) {
+        syncError = "Strava odrzuciła dostęp (403), mimo zgody na aktywności. Odłącz aplikację w Stravie i połącz ponownie.";
+      } else if (status === 429) {
+        syncError = "Limit zapytań do Stravy. Spróbuj ponownie za kilka minut.";
+      } else {
+        syncError = err.message || "Nie udało się pobrać danych ze Stravy.";
+      }
       toast(syncError);
       if (String(err.message || "").toLowerCase().includes("token")) {
         saveAuth(Object.assign({}, auth, { accessToken: null, expiresAt: 0 }));
@@ -1396,6 +1427,27 @@
     });
   }
 
+  function copyDiagnostics() {
+    const d = lastSyncDebug || {};
+    const text = [
+      "Strava diag",
+      "status: " + (d.status || "brak"),
+      "body: " + (d.body || "brak"),
+      "scope: " + (d.scope || (auth && auth.scope) || "brak"),
+      "url: " + (d.requestUrl || "brak"),
+      "kiedy: " + (d.at || "brak"),
+      "tokenExp: " + ((auth && auth.expiresAt) || "brak"),
+      "athlete: " + ((auth && auth.athlete && auth.athlete.id) || "brak")
+    ].join("\n");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => toast("Diagnostyka skopiowana — wklej mi ją w czacie."))
+        .catch(() => window.prompt("Skopiuj diagnostykę:", text));
+      return;
+    }
+    window.prompt("Skopiuj diagnostykę:", text);
+  }
+
   function handleStravaAction(action) {
     if (action === "connect" || action === "help") {
       openDialog($("#strava-dialog"));
@@ -1404,7 +1456,10 @@
     }
     if (action === "authorize") return authorize();
     if (action === "sync") return syncActivities();
+    if (action === "copy-diag") return copyDiagnostics();
     if (action === "reconnect") {
+      syncError = "";
+      lastSyncDebug = null;
       if (auth && auth.clientId && auth.clientSecret) {
         beginAuth(auth.clientId, auth.clientSecret, true);
       } else {
