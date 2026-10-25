@@ -185,6 +185,24 @@
     return d;
   }
 
+  function mondayOf(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diff = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - diff);
+    return d;
+  }
+
+  function ensureStartDate() {
+    if (state.start) return false;
+    const monday = mondayOf(new Date());
+    state.start = toISODate(monday);
+    const input = $("#start-date");
+    if (input) input.value = state.start;
+    saveState(true);
+    toast("Start planu ustawiony na poniedziałek. Możesz zmienić datę w nagłówku.");
+    return true;
+  }
+
   function planStart() {
     return parseISODate(state.start);
   }
@@ -481,7 +499,9 @@
       <div class="ri-main">
         <div class="ri-name">${esc(activity.name || "Bieg")}</div>
         <div class="ri-meta">${esc(meta)}${activity.distance ? "" : (isConnected() ? " · staty po synchronizacji" : " · staty po połączeniu")}</div>
-        ${activity.distance ? "" : `<button type="button" class="text-btn ri-stats-btn" data-action="stats" data-activity="${esc(activity.id)}">Wpisz staty</button>`}
+        ${activity.distance
+          ? (activity.manualStats ? `<button type="button" class="text-btn ri-stats-btn" data-action="stats" data-activity="${esc(activity.id)}">Zmień staty</button>` : "")
+          : `<button type="button" class="text-btn ri-stats-btn" data-action="stats" data-activity="${esc(activity.id)}">Wpisz staty</button>`}
       </div>
       <a href="https://www.strava.com/activities/${esc(activity.id)}" target="_blank" rel="noopener">↗</a>
     </div>`;
@@ -551,10 +571,11 @@
           </div>
           <div class="sa-name">Aktywność podpięta ręcznie</div>
           <div class="sp-actions" style="margin-top:8px">
-            <button type="button" class="btn" data-action="strava-embed" data-id="${esc(workout.id)}">Pokaż staty</button>
+            <button type="button" class="btn" data-action="stats" data-activity="${esc(id)}" data-workout="${esc(workout.id)}">Wpisz staty</button>
+            <button type="button" class="btn" data-action="strava-embed" data-id="${esc(workout.id)}">Pokaż podgląd</button>
             <button type="button" class="text-btn" data-action="link-strava" data-id="${esc(workout.id)}">Zmień lub usuń</button>
           </div>
-          <p class="sa-note">Podgląd ładuje się bezpośrednio ze Stravy. Działa dla aktywności publicznych.</p>
+          <p class="sa-note">Staty możesz wpisać ręcznie albo spróbować podglądu (działa dla aktywności publicznych).</p>
         </div>`;
     }
 
@@ -577,9 +598,9 @@
     const stats = [
       ["Dystans", fmtKm(a.distance)],
       ["Czas", fmtDuration(a.moving_time)],
-      ["Tempo", fmtPace(activityPace(a)) + "\u00A0/km"],
-      ["Przewyższenia", nf0.format(a.elevation || 0) + " m"]
+      ["Tempo", fmtPace(activityPace(a)) + "\u00A0/km"]
     ];
+    if (a.elevation) stats.push(["Przewyższenia", nf0.format(a.elevation) + " m"]);
     if (a.avg_hr) stats.push(["Śr. tętno", Math.round(a.avg_hr) + " bpm"]);
     if (a.max_hr) stats.push(["Max tętno", Math.round(a.max_hr) + " bpm"]);
     if (a.kudos) stats.push(["Kudosy", nf0.format(a.kudos)]);
@@ -899,7 +920,24 @@
       syncError = "";
       const known = new Set(state.strava.activities.map((a) => String(a.id)));
       const added = fresh.filter((a) => !known.has(String(a.id)));
-      state.strava = { fetchedAt: Date.now(), activities: mergePinned(fresh) };
+      // Nie gub statów wpisanych ręcznie, jeśli API ich nie zwróci.
+      const localById = new Map(state.strava.activities.map((a) => [String(a.id), a]));
+      const merged = fresh.map((a) => {
+        const local = localById.get(String(a.id));
+        if (local && local.manualStats && !a.distance) {
+          return Object.assign({}, a, {
+            distance: local.distance,
+            moving_time: local.moving_time,
+            avg_hr: local.avg_hr,
+            manualStats: true
+          });
+        }
+        return a;
+      });
+      state.strava.activities.forEach((a) => {
+        if (a.manualStats && !merged.some((b) => String(b.id) === String(a.id))) merged.push(a);
+      });
+      state.strava = { fetchedAt: Date.now(), activities: mergePinned(merged) };
 
       let completed = 0;
       if (state.start) {
@@ -977,6 +1015,7 @@
         athlete: data.athlete
       }));
       toast("Połączono ze Stravą. Pobieram aktywności…");
+      ensureStartDate();
       renderStravaPanel();
       await syncActivities({ silent: false });
       closeDialog($("#strava-dialog"));
@@ -1090,12 +1129,22 @@
   let statsContext = null;
 
   function openStatsDialog(activityId, workoutId) {
-    const activity = state.strava.activities.find((a) => String(a.id) === String(activityId));
+    let activity = state.strava.activities.find((a) => String(a.id) === String(activityId));
+    let draft = null;
     if (!activity) {
-      toast("Nie znaleziono aktywności.");
-      return;
+      const workout = workoutId ? WORKOUTS.find((w) => w.id === workoutId) : null;
+      const pinned = (PLAN.pinned || []).find((p) => String(p.id) === String(activityId));
+      const day = workout ? workoutDate(workout) : new Date();
+      draft = {
+        id: pinned ? pinned.id : Number(activityId),
+        name: (pinned && pinned.name) || "Bieg",
+        date: (pinned && pinned.date) || toISODate(day || new Date()),
+        distance: 0,
+        moving_time: 0
+      };
+      activity = draft;
     }
-    statsContext = { activityId: String(activityId), workoutId: workoutId || null };
+    statsContext = { activityId: String(activityId), workoutId: workoutId || null, draft };
     const km = activity.distance ? (activity.distance / 1000).toFixed(2).replace(".", ",") : "";
     const time = activity.moving_time ? fmtDuration(activity.moving_time) : "";
     const hr = activity.avg_hr ? String(Math.round(activity.avg_hr)) : "";
@@ -1134,10 +1183,16 @@
       toast("Podaj czas, np. 35:00.");
       return;
     }
-    const activity = state.strava.activities.find((a) => String(a.id) === statsContext.activityId);
+    let activity = state.strava.activities.find((a) => String(a.id) === statsContext.activityId);
     if (!activity) {
-      toast("Nie znaleziono aktywności.");
-      return;
+      if (statsContext.draft) {
+        activity = statsContext.draft;
+        state.strava.activities.push(activity);
+        state.strava.activities = mergePinned(state.strava.activities);
+      } else {
+        toast("Nie znaleziono aktywności.");
+        return;
+      }
     }
     activity.distance = Math.round(km * 1000);
     activity.moving_time = seconds;
@@ -1423,6 +1478,9 @@
     renderStravaPanel();
     bindEvents();
 
+    if (isConnected() && state.strava.activities.some((a) => a.distance && a.moving_time)) {
+      ensureStartDate();
+    }
     if (state.start) autoCompleteFromCache();
 
     handleOAuthCallback();
