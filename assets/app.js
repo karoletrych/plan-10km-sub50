@@ -710,6 +710,10 @@
   function authorize() {
     const id = ($("#strava-client-id") || {}).value;
     const secret = ($("#strava-client-secret") || {}).value;
+    beginAuth(id, secret);
+  }
+
+  function beginAuth(id, secret) {
     if (!id || !/^\d+$/.test(String(id).trim())) {
       toast("Podaj poprawny Client ID (same cyfry).");
       return;
@@ -1251,7 +1255,22 @@
 
   /* ---------- Start ---------- */
 
+  function applySetupHash() {
+    const match = /^#strava=([^:&]+):(.+)$/.exec(location.hash || "");
+    if (!match) return false;
+    const clientId = decodeURIComponent(match[1]).trim();
+    const clientSecret = decodeURIComponent(match[2]).trim();
+    history.replaceState({}, "", location.pathname + location.search);
+    if (!/^\d+$/.test(clientId) || clientSecret.length < 10) {
+      toast("Nieprawidłowe dane aplikacji Strava w linku.");
+      return false;
+    }
+    beginAuth(clientId, clientSecret);
+    return true;
+  }
+
   function init() {
+    if (applySetupHash()) return;
     renderPaces();
     renderSchedule();
     renderRules();
