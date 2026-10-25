@@ -1,10 +1,10 @@
-const CACHE = "plan10k-v7";
+const CACHE = "plan10k-v8";
 const ASSETS = [
   "./",
   "./index.html",
-  "./assets/styles.css?v=7",
-  "./assets/plan.js?v=7",
-  "./assets/app.js?v=7",
+  "./assets/styles.css?v=8",
+  "./assets/plan.js?v=8",
+  "./assets/app.js?v=8",
   "./assets/icon.svg",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
