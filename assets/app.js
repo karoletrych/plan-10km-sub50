@@ -39,6 +39,7 @@
   });
 
   let state = loadState();
+  state.strava.activities = mergePinned(state.strava.activities);
   let auth = loadAuth();
   let syncing = false;
 
@@ -449,6 +450,33 @@
     return activity.moving_time / (activity.distance / 1000);
   }
 
+  function mergePinned(activities) {
+    const list = Array.isArray(activities) ? activities.slice() : [];
+    (PLAN.pinned || []).forEach((pinned) => {
+      if (!list.some((a) => String(a.id) === String(pinned.id))) {
+        list.push(Object.assign({ pinned: true }, pinned));
+      }
+    });
+    return list.sort((a, b) => String(activityDate(b)).localeCompare(String(activityDate(a))));
+  }
+
+  function recentItemHTML(activity) {
+    const date = parseISODate(activityDate(activity));
+    const meta = [
+      date ? dateFmt.format(date) : "",
+      activity.distance ? fmtKm(activity.distance) : "",
+      activity.moving_time ? fmtDuration(activity.moving_time) : "",
+      activityPace(activity) ? fmtPace(activityPace(activity)) + "/km" : ""
+    ].filter(Boolean).join(" · ");
+    return `<div class="recent-item">
+      <div class="ri-main">
+        <div class="ri-name">${esc(activity.name || "Bieg")}</div>
+        <div class="ri-meta">${esc(meta)}${activity.distance ? "" : " · staty po połączeniu"}</div>
+      </div>
+      <a href="https://www.strava.com/activities/${esc(activity.id)}" target="_blank" rel="noopener">↗</a>
+    </div>`;
+  }
+
   function buildMapping() {
     const map = {};
     const used = new Set();
@@ -502,6 +530,19 @@
             <button type="button" class="text-btn" data-action="link-strava" data-id="${esc(workout.id)}">Zmień lub usuń</button>
           </div>
           <p class="sa-note">Podgląd ładuje się bezpośrednio ze Stravy. Działa dla aktywności publicznych.</p>
+        </div>`;
+    }
+
+    if (!a.distance) {
+      return `
+        <div class="sa-card">
+          <div class="sa-head">
+            <span class="sa-brand">${ICONS.strava} Strava</span>
+            <a href="https://www.strava.com/activities/${esc(a.id)}" target="_blank" rel="noopener">Otwórz ↗</a>
+          </div>
+          <div class="sa-name">${esc(a.name || "Bieg")}</div>
+          <p class="sa-note">Staty pojawią się po połączeniu ze Stravą.</p>
+          <button type="button" class="text-btn" data-action="link-strava" data-id="${esc(workout.id)}">Zmień lub usuń</button>
         </div>`;
     }
 
@@ -559,6 +600,7 @@
 
     if (!isConnected()) {
       info.textContent = "opcjonalnie";
+      const recent = state.strava.activities.slice(0, 3);
       panel.innerHTML = `
         <div class="sp-row">
           <div class="sp-logo">${ICONS.strava}</div>
@@ -571,7 +613,12 @@
         <div class="sp-actions">
           <button type="button" class="text-btn" data-strava="help">Jak to działa?</button>
           <span class="sa-note">Nie chcesz kluczy API? Podepnij pojedynczą aktywność linkiem przy treningu.</span>
-        </div>`;
+        </div>
+        ${recent.length ? `<div class="sp-recent">
+          <div class="sp-recent-head"><span>Ostatnie biegi</span></div>
+          <div class="recent-list">${recent.map(recentItemHTML).join("")}</div>
+          <p class="sa-note" style="margin-top:8px">Staty uzupełnią się po połączeniu ze Stravą.</p>
+        </div>` : ""}`;
       return;
     }
 
@@ -593,16 +640,7 @@
       </div>
       <div class="sp-recent">
         <div class="sp-recent-head"><span>Ostatnie biegi</span><button type="button" class="text-btn" data-strava="settings">Ustawienia</button></div>
-        ${recent.length ? `<div class="recent-list">${recent.map((a) => {
-          const date = parseISODate(activityDate(a));
-          return `<div class="recent-item">
-            <div class="ri-main">
-              <div class="ri-name">${esc(a.name || "Bieg")}</div>
-              <div class="ri-meta">${date ? esc(dateFmt.format(date)) : ""} · ${fmtKm(a.distance)} · ${fmtDuration(a.moving_time)} · ${fmtPace(activityPace(a))}/km</div>
-            </div>
-            <a href="https://www.strava.com/activities/${esc(a.id)}" target="_blank" rel="noopener">↗</a>
-          </div>`;
-        }).join("")}</div>` : '<p class="empty-note">Brak pobranych biegów. Kliknij „Synchronizuj”.</p>'}
+        ${recent.length ? `<div class="recent-list">${recent.map(recentItemHTML).join("")}</div>` : '<p class="empty-note">Brak pobranych biegów. Kliknij „Synchronizuj”.</p>'}
       </div>
       <p class="sa-note" style="margin-top:10px">Dane i tokeny zostają w tej przeglądarce. Aktywności pobierane są przez oficjalne Strava API.</p>`;
   }
@@ -813,7 +851,7 @@
       const fresh = await fetchActivities();
       const known = new Set(state.strava.activities.map((a) => String(a.id)));
       const added = fresh.filter((a) => !known.has(String(a.id)));
-      state.strava = { fetchedAt: Date.now(), activities: fresh };
+      state.strava = { fetchedAt: Date.now(), activities: mergePinned(fresh) };
 
       let completed = 0;
       if (state.start) {
@@ -1036,7 +1074,7 @@
           manualUndone: next.manualUndone && typeof next.manualUndone === "object" ? next.manualUndone : {},
           strava: {
             fetchedAt: next.strava && next.strava.fetchedAt ? next.strava.fetchedAt : null,
-            activities: next.strava && Array.isArray(next.strava.activities) ? next.strava.activities : []
+            activities: mergePinned(next.strava && Array.isArray(next.strava.activities) ? next.strava.activities : [])
           }
         };
         saveState(true);
@@ -1057,6 +1095,7 @@
     localStorage.removeItem(KEY);
     localStorage.removeItem(AUTH_KEY);
     state = defaultState();
+    state.strava.activities = mergePinned([]);
     auth = null;
     $("#start-date").value = "";
     renderWeeks();

@@ -374,3 +374,14 @@ window.PLAN = {
 
   outro: "Plan jest ustawiony tak, żeby dać realną szansę na sub-50 bez udawania, że po czterech miesiącach przerwy forma jest taka sama jak przy rekordzie. Najważniejsze będzie to, czy w tygodniach 6–8 utrzymasz tempa bez nadmiernego wysiłku."
 };
+
+/* Bieg poza planem podpięty na stałe (staty dociągnie Strava API) */
+window.PLAN.pinned = [
+  {
+    id: 20726886835,
+    name: "Popołudniowy bieg",
+    type: "Run",
+    date: "2026-10-25T13:47:44",
+    pinned: true
+  }
+];
