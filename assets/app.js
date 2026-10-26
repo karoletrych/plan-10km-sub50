@@ -678,7 +678,8 @@
     const recent = state.strava.activities.slice(0, 4);
     const withStats = state.strava.activities.filter((a) => a.distance && a.moving_time).length;
     const scopeOk = !auth.scope || /activity:read/.test(auth.scope);
-    const needsReconnect = !scopeOk || /dostęp do aktywności|odrzuciła|wygasł|403|401|forbidden|authorization/i.test(syncError);
+    const inactive = Boolean(lastSyncDebug && lastSyncDebug.inactive);
+    const needsReconnect = !inactive && (!scopeOk || /dostęp do aktywności|odrzuciła|wygasł|403|401|forbidden|authorization/i.test(syncError));
     const problem = !scopeOk && !syncError
       ? "Strava nie przyznała dostępu do aktywności. Połącz ponownie i zaznacz zgodę."
       : syncError;
@@ -703,7 +704,7 @@
         <div class="sp-actions" style="margin-top:8px">
           ${needsReconnect ? '<button type="button" class="btn btn-primary" data-strava="reconnect">Połącz ponownie</button>' : ""}
           ${lastSyncDebug ? '<button type="button" class="text-btn" data-strava="copy-diag">Kopiuj diagnostykę</button>' : ""}
-          <a class="text-btn" href="https://www.strava.com/settings/apps" target="_blank" rel="noopener">Aplikacje w Stravie ↗</a>
+          <a class="text-btn" href="${inactive ? "https://www.strava.com/settings/api" : "https://www.strava.com/settings/apps"}" target="_blank" rel="noopener">${inactive ? "Ustawienia API Stravy ↗" : "Aplikacje w Stravie ↗"}</a>
         </div>
       </div>` : ""}
       ${!state.start ? `<p class="sp-hint">Ustaw datę startu, żeby biegi automatycznie dopasowały się do treningów.
@@ -987,14 +988,17 @@
         body: err.body || "",
         scope,
         requestUrl: err.requestUrl || "",
-        at: new Date().toISOString()
+        at: new Date().toISOString(),
+        inactive: /Application/.test(err.body || "") && /Inactive/.test(err.body || "")
       };
-      if (status === 401) {
+      if (lastSyncDebug.inactive) {
+        syncError = "Aplikacja Strava jest nieaktywna. Strava wymaga aktywnej subskrypcji, żeby aplikacja API działała. Staty możesz wpisać ręcznie przy biegu.";
+      } else if (status === 401) {
         syncError = "Token Stravy wygasł lub został unieważniony. Połącz ponownie.";
       } else if (status === 403 && !hasScope) {
         syncError = "Strava nie przyznała dostępu do aktywności. Połącz ponownie i zaznacz zgodę na aktywności.";
       } else if (status === 403) {
-        syncError = "Strava odrzuciła dostęp (403), mimo zgody na aktywności. Odłącz aplikację w Stravie i połącz ponownie.";
+        syncError = "Strava odrzuciła dostęp (403). Odłącz aplikację w Stravie i połącz ponownie.";
       } else if (status === 429) {
         syncError = "Limit zapytań do Stravy. Spróbuj ponownie za kilka minut.";
       } else {
