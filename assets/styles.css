@@ -875,6 +875,21 @@ a { color: inherit; }
 .strava-link-btn:hover { background: color-mix(in srgb, var(--strava) 8%, transparent); }
 .strava-link-btn svg { width: 12px; height: 12px; }
 
+.stats-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  color: var(--accent);
+  font-size: .72rem;
+  font-weight: 650;
+}
+
+.stats-btn:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
 .sa-card {
   margin-top: 8px;
   border: 1px solid color-mix(in srgb, var(--strava) 28%, var(--line));
@@ -892,6 +907,10 @@ a { color: inherit; }
 }
 
 .sa-head .sa-brand { color: var(--strava); display: inline-flex; align-items: center; gap: 5px; }
+.sa-head .sa-brand.manual { color: var(--accent); }
+.sa-tools { margin-left: auto; display: inline-flex; gap: 10px; }
+.wo-actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wo-actions-row .text-btn { font-size: .72rem; }
 .sa-head svg { width: 12px; height: 12px; }
 .sa-head a { margin-left: auto; color: var(--strava); font-size: .72rem; text-decoration: none; }
 

@@ -35,6 +35,7 @@
     log: {},
     links: {},
     manualUndone: {},
+    manualStats: {},
     strava: { fetchedAt: null, activities: [] }
   });
 
@@ -57,6 +58,7 @@
         log: parsed.log && typeof parsed.log === "object" ? parsed.log : base.log,
         links: parsed.links && typeof parsed.links === "object" ? parsed.links : base.links,
         manualUndone: parsed.manualUndone && typeof parsed.manualUndone === "object" ? parsed.manualUndone : base.manualUndone,
+        manualStats: parsed.manualStats && typeof parsed.manualStats === "object" ? parsed.manualStats : base.manualStats,
         strava: {
           fetchedAt: parsed.strava && parsed.strava.fetchedAt ? parsed.strava.fetchedAt : null,
           activities: parsed.strava && Array.isArray(parsed.strava.activities) ? parsed.strava.activities : []
@@ -554,11 +556,37 @@
     return map;
   }
 
+  function manualStatsCardHTML(workout, ms) {
+    const pace = ms.distance ? ms.moving_time / (ms.distance / 1000) : 0;
+    const stats = [
+      ["Dystans", fmtKm(ms.distance)],
+      ["Czas", fmtDuration(ms.moving_time)],
+      ["Tempo", fmtPace(pace) + "\u00A0/km"]
+    ];
+    if (ms.avg_hr) stats.push(["Śr. tętno", Math.round(ms.avg_hr) + " bpm"]);
+    return `
+      <div class="sa-card">
+        <div class="sa-head">
+          <span class="sa-brand manual">Twoje staty</span>
+          <span class="sa-tools">
+            <button type="button" class="text-btn" data-action="stats" data-workout="${esc(workout.id)}">Zmień</button>
+            <button type="button" class="text-btn" data-action="stats-remove" data-workout="${esc(workout.id)}">Usuń</button>
+          </span>
+        </div>
+        <div class="sa-stats">
+          ${stats.map(([label, value]) => `<div class="sa-stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join("")}
+        </div>
+      </div>`;
+  }
+
   function stravaSlotHTML(workout, entry) {
     if (!entry) {
-      return `<button type="button" class="strava-link-btn" data-action="link-strava" data-id="${esc(workout.id)}">
-        ${ICONS.strava} Podepnij Stravę
-      </button>`;
+      const ms = state.manualStats[workout.id];
+      if (ms) return manualStatsCardHTML(workout, ms);
+      return `<div class="wo-actions-row">
+        <button type="button" class="stats-btn" data-action="stats" data-workout="${esc(workout.id)}">Wpisz staty</button>
+        <button type="button" class="text-btn" data-action="link-strava" data-id="${esc(workout.id)}">Podepnij Stravę</button>
+      </div>`;
     }
 
     const a = entry.activity;
@@ -655,19 +683,19 @@
         <div class="sp-row">
           <div class="sp-logo">${ICONS.strava}</div>
           <div class="sp-grow">
-            <div class="sp-title">Podepnij swoje biegi</div>
-            <div class="sp-sub">Po połączeniu staty z aktywności pojawią się przy treningach — automatycznie, po dacie.</div>
+            <div class="sp-title">Wpisz staty przy treningu</div>
+            <div class="sp-sub">Dystans i czas wystarczą — tempo wyliczy się samo. Stravę możesz podpiąć, jeśli chcesz automat.</div>
           </div>
           <button type="button" class="btn btn-primary" data-strava="connect">Połącz Stravę</button>
         </div>
         <div class="sp-actions">
           <button type="button" class="text-btn" data-strava="help">Jak to działa?</button>
-          <span class="sa-note">Nie chcesz kluczy API? Podepnij pojedynczą aktywność linkiem przy treningu.</span>
+          <span class="sa-note">Bez Stravy: przycisk „Wpisz staty” przy każdym treningu.</span>
         </div>
         ${recent.length ? `<div class="sp-recent">
           <div class="sp-recent-head"><span>Ostatnie biegi</span></div>
           <div class="recent-list">${recent.map(recentItemHTML).join("")}</div>
-          <p class="sa-note" style="margin-top:8px">Staty uzupełnią się po połączeniu ze Stravą.</p>
+          <p class="sa-note" style="margin-top:8px">Staty uzupełnisz ręcznie przy biegu.</p>
         </div>` : ""}`;
       return;
     }
@@ -1164,9 +1192,11 @@
   let statsContext = null;
 
   function openStatsDialog(activityId, workoutId) {
-    let activity = state.strava.activities.find((a) => String(a.id) === String(activityId));
+    let activity = activityId
+      ? state.strava.activities.find((a) => String(a.id) === String(activityId))
+      : null;
     let draft = null;
-    if (!activity) {
+    if (!activity && activityId) {
       const workout = workoutId ? WORKOUTS.find((w) => w.id === workoutId) : null;
       const pinned = (PLAN.pinned || []).find((p) => String(p.id) === String(activityId));
       const day = workout ? workoutDate(workout) : new Date();
@@ -1178,13 +1208,20 @@
         moving_time: 0
       };
       activity = draft;
+    } else if (!activity) {
+      const ms = workoutId ? state.manualStats[workoutId] : null;
+      activity = {
+        distance: ms ? ms.distance : 0,
+        moving_time: ms ? ms.moving_time : 0,
+        avg_hr: ms ? ms.avg_hr : 0
+      };
     }
-    statsContext = { activityId: String(activityId), workoutId: workoutId || null, draft };
+    statsContext = { activityId: activityId ? String(activityId) : null, workoutId: workoutId || null, draft };
     const km = activity.distance ? (activity.distance / 1000).toFixed(2).replace(".", ",") : "";
     const time = activity.moving_time ? fmtDuration(activity.moving_time) : "";
     const hr = activity.avg_hr ? String(Math.round(activity.avg_hr)) : "";
     $("#stats-dialog-body").innerHTML = `
-      <p>Wpisz dane z aktywności Strava. Tempo policzy się samo.</p>
+      <p>${activityId ? "Wpisz dane z aktywności Strava." : "Wpisz dystans i czas treningu."} Tempo policzy się samo.</p>
       <div class="input-block">
         <label>Dystans (km)
           <input id="stats-distance" inputmode="decimal" autocomplete="off" placeholder="np. 6,02" value="${esc(km)}">
@@ -1218,6 +1255,23 @@
       toast("Podaj czas, np. 35:00.");
       return;
     }
+    if (!statsContext.activityId) {
+      const wid = statsContext.workoutId;
+      if (!wid) {
+        toast("Nie znaleziono treningu.");
+        return;
+      }
+      const prev = state.manualStats[wid] || {};
+      state.manualStats[wid] = {
+        distance: Math.round(km * 1000),
+        moving_time: seconds,
+        avg_hr: hrRaw ? Number(hrRaw) || null : prev.avg_hr || null
+      };
+      markManualDone(wid, seconds);
+      finishStatsSave();
+      return;
+    }
+
     let activity = state.strava.activities.find((a) => String(a.id) === statsContext.activityId);
     if (!activity) {
       if (statsContext.draft) {
@@ -1234,15 +1288,20 @@
     activity.avg_hr = hrRaw ? Number(hrRaw) || null : activity.avg_hr || null;
     activity.manualStats = true;
 
-    if (statsContext.workoutId) {
-      state.done[statsContext.workoutId] = true;
-      delete state.manualUndone[statsContext.workoutId];
-      const log = state.log[statsContext.workoutId] || {};
-      if (!log.t) {
-        state.log[statsContext.workoutId] = Object.assign({}, log, { t: fmtDuration(seconds) });
-      }
-    }
+    if (statsContext.workoutId) markManualDone(statsContext.workoutId, seconds);
+    finishStatsSave();
+  }
 
+  function markManualDone(workoutId, seconds) {
+    state.done[workoutId] = true;
+    delete state.manualUndone[workoutId];
+    const log = state.log[workoutId] || {};
+    if (!log.t) {
+      state.log[workoutId] = Object.assign({}, log, { t: fmtDuration(seconds) });
+    }
+  }
+
+  function finishStatsSave() {
     saveState(true);
     renderWeeks();
     refreshProgress();
@@ -1250,6 +1309,15 @@
     closeDialog($("#stats-dialog"));
     statsContext = null;
     toast("Staty zapisane.");
+  }
+
+  function removeManualStats(workoutId) {
+    if (!state.manualStats[workoutId]) return;
+    delete state.manualStats[workoutId];
+    saveState(true);
+    renderWeeks();
+    refreshProgress();
+    toast("Staty usunięte.");
   }
 
   /* ---------- Eksport / import ---------- */
@@ -1289,6 +1357,7 @@
           log: next.log || {},
           links: next.links || {},
           manualUndone: next.manualUndone && typeof next.manualUndone === "object" ? next.manualUndone : {},
+          manualStats: next.manualStats && typeof next.manualStats === "object" ? next.manualStats : {},
           strava: {
             fetchedAt: next.strava && next.strava.fetchedAt ? next.strava.fetchedAt : null,
             activities: mergePinned(next.strava && Array.isArray(next.strava.activities) ? next.strava.activities : [])
@@ -1400,6 +1469,8 @@
       if (statsAction && statsAction.dataset.statsAction === "save") saveStats();
       const statsBtn = event.target.closest('[data-action="stats"]');
       if (statsBtn) openStatsDialog(statsBtn.dataset.activity, statsBtn.dataset.workout);
+      const statsRemove = event.target.closest('[data-action="stats-remove"]');
+      if (statsRemove) removeManualStats(statsRemove.dataset.workout);
       const pick = event.target.closest("[data-pick]");
       if (pick) {
         const activity = state.strava.activities.find((a) => String(a.id) === pick.dataset.pick);
