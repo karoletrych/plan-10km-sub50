@@ -5,7 +5,7 @@ Mobilna aplikacja z 9-tygodniowym planem treningowym na 10 km poniżej 50 minut 
 ## Co potrafi
 
 - 9 tygodni, 27 treningów z dystansem, tempem i celem każdej jednostki
-- odhaczanie treningów, wpisywanie czasu i notatek
+- odhaczanie treningów i wpisywanie czasu
 - pasek postępu, aktualny tydzień na podstawie daty startu
 - **integracja ze Stravą**: automatyczne dopasowanie aktywności do dni treningowych i staty (dystans, czas, tempo, przewyższenia, tętno)
 - tryb bez kluczy API: podpięcie pojedynczej aktywności linkiem (oficjalny embed Stravy)

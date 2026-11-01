@@ -168,6 +168,28 @@
     return null;
   }
 
+  /* Czas wpisywany dwoma polami (min + sek) — cyfrowa klawiatura nie ma dwukropka. */
+  function secondsToParts(seconds) {
+    const total = Math.max(0, Math.round(Number(seconds) || 0));
+    return { min: String(Math.floor(total / 60)), sec: String(total % 60).padStart(2, "0") };
+  }
+
+  function splitTimeParts(value) {
+    const total = parseTimeInput(value);
+    return total == null ? { min: "", sec: "" } : secondsToParts(total);
+  }
+
+  function combineTimeParts(minRaw, secRaw) {
+    const min = String(minRaw || "").replace(/\D/g, "");
+    const sec = String(secRaw || "").replace(/\D/g, "");
+    if (!min && !sec) return "";
+    return fmtDuration(Number(min || 0) * 60 + Number(sec || 0));
+  }
+
+  function digitsOnly(value, max) {
+    return String(value || "").replace(/\D/g, "").slice(0, max);
+  }
+
   function toISODate(date) {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -307,12 +329,15 @@
         ${splits}
         <div class="wo-log" data-log="${esc(w.id)}" hidden>
           <div class="log-row">
-            <label class="field">Czas
-              <input class="time-input" data-id="${esc(w.id)}" inputmode="numeric" autocomplete="off" placeholder="mm:ss">
+            <label class="field field-time">Czas
+              <span class="time-pair">
+                <input class="time-min" data-id="${esc(w.id)}" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" placeholder="min" aria-label="Minuty">
+                <span class="time-colon" aria-hidden="true">:</span>
+                <input class="time-sec" data-id="${esc(w.id)}" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" placeholder="sek" aria-label="Sekundy">
+              </span>
             </label>
             <span class="calc-pace" data-calc="${esc(w.id)}"></span>
           </div>
-          <input class="note-field" data-note="${esc(w.id)}" autocomplete="off" placeholder="Notatka (np. ciężkie nogi, upał)">
         </div>
         <div class="wo-strava" data-strava-slot="${esc(w.id)}"></div>
       </article>`;
@@ -344,10 +369,11 @@
 
     WORKOUTS.forEach((w) => {
       const log = state.log[w.id] || {};
-      const timeInput = $(`.time-input[data-id="${w.id}"]`);
-      const noteInput = $(`.note-field[data-note="${w.id}"]`);
-      if (timeInput) timeInput.value = log.t || "";
-      if (noteInput) noteInput.value = log.n || "";
+      const parts = splitTimeParts(log.t);
+      const minInput = $(`.time-min[data-id="${w.id}"]`);
+      const secInput = $(`.time-sec[data-id="${w.id}"]`);
+      if (minInput) minInput.value = parts.min;
+      if (secInput) secInput.value = parts.sec;
     });
 
     if (current && current >= 1) {
@@ -429,18 +455,44 @@
     return `<span class="now-dot"></span> Tydzień <strong>${week} z 9</strong> · dziś ${DAY_NAMES[today.getDay()]}`;
   }
 
+  function actualDistanceMeters(workout) {
+    const ms = state.manualStats[workout.id];
+    if (ms && ms.distance) return ms.distance;
+    const linkedId = state.links[workout.id];
+    if (linkedId) {
+      const linked = state.strava.activities.find((a) => String(a.id) === String(linkedId));
+      return linked && linked.distance ? linked.distance : null;
+    }
+    const date = workoutDate(workout);
+    if (!date) return null;
+    const match = findActivityForDate(toISODate(date), state.strava.activities, new Set());
+    return match && match.a.distance ? match.a.distance : null;
+  }
+
   function updateCalc(id) {
     const workout = WORKOUTS.find((w) => w.id === id);
     const calc = $(`[data-calc="${id}"]`);
     if (!workout || !calc) return;
     const log = state.log[id] || {};
     const seconds = parseTimeInput(log.t);
-    if (!seconds || !workout.km) {
+    if (!seconds) {
       calc.textContent = "";
+      calc.classList.remove("is-plan");
       return;
     }
-    const pace = seconds / workout.km;
-    calc.textContent = "≈ " + fmtPace(pace) + " /km";
+    const meters = actualDistanceMeters(workout);
+    const km = meters ? meters / 1000 : workout.km;
+    if (!km) {
+      calc.textContent = "";
+      calc.classList.remove("is-plan");
+      return;
+    }
+    const pace = seconds / km;
+    // Tempo liczymy z faktycznego dystansu. Bez niego wynik jest tylko szacunkiem.
+    calc.textContent = meters
+      ? "≈ " + fmtPace(pace) + " /km"
+      : "≈ " + fmtPace(pace) + " /km · szacunek z planu";
+    calc.classList.toggle("is-plan", !meters);
   }
 
   /* ---------- Log treningu ---------- */
@@ -1218,7 +1270,7 @@
     }
     statsContext = { activityId: activityId ? String(activityId) : null, workoutId: workoutId || null, draft };
     const km = activity.distance ? (activity.distance / 1000).toFixed(2).replace(".", ",") : "";
-    const time = activity.moving_time ? fmtDuration(activity.moving_time) : "";
+    const timeParts = secondsToParts(activity.moving_time || 0);
     const hr = activity.avg_hr ? String(Math.round(activity.avg_hr)) : "";
     $("#stats-dialog-body").innerHTML = `
       <p>${activityId ? "Wpisz dane z aktywności Strava." : "Wpisz dystans i czas treningu."} Tempo policzy się samo.</p>
@@ -1226,8 +1278,12 @@
         <label>Dystans (km)
           <input id="stats-distance" inputmode="decimal" autocomplete="off" placeholder="np. 6,02" value="${esc(km)}">
         </label>
-        <label>Czas (mm:ss)
-          <input id="stats-time" inputmode="numeric" autocomplete="off" placeholder="np. 35:00" value="${esc(time)}">
+        <label>Czas (min : sek)
+          <span class="time-pair">
+            <input id="stats-time-min" class="time-min" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" placeholder="min" aria-label="Minuty" value="${activity.moving_time ? esc(timeParts.min) : ""}">
+            <span class="time-colon" aria-hidden="true">:</span>
+            <input id="stats-time-sec" class="time-sec" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" placeholder="sek" aria-label="Sekundy" value="${activity.moving_time ? esc(timeParts.sec) : ""}">
+          </span>
         </label>
         <label>Śr. tętno (opcjonalnie)
           <input id="stats-hr" inputmode="numeric" autocomplete="off" placeholder="np. 152" value="${esc(hr)}">
@@ -1243,7 +1299,10 @@
   function saveStats() {
     if (!statsContext) return;
     const kmRaw = String(($("#stats-distance") || {}).value || "").replace(",", ".").trim();
-    const timeRaw = String(($("#stats-time") || {}).value || "").trim();
+    const timeRaw = combineTimeParts(
+      ($("#stats-time-min") || {}).value,
+      ($("#stats-time-sec") || {}).value
+    );
     const hrRaw = String(($("#stats-hr") || {}).value || "").trim();
     const km = Number(kmRaw);
     const seconds = parseTimeInput(timeRaw);
@@ -1417,15 +1476,37 @@
     });
 
     $("#weeks").addEventListener("input", (event) => {
-      const timeInput = event.target.closest(".time-input");
-      const noteInput = event.target.closest(".note-field");
-      if (timeInput) {
-        setLog(timeInput.dataset.id, { t: timeInput.value });
-        updateCalc(timeInput.dataset.id);
+      const timeField = event.target.closest(".time-min, .time-sec");
+      if (timeField) {
+        const max = timeField.classList.contains("time-sec") ? 2 : 3;
+        const clean = digitsOnly(timeField.value, max);
+        if (timeField.value !== clean) timeField.value = clean;
+        const id = timeField.dataset.id;
+        const minEl = $(`.time-min[data-id="${id}"]`);
+        const secEl = $(`.time-sec[data-id="${id}"]`);
+        setLog(id, { t: combineTimeParts(minEl ? minEl.value : "", secEl ? secEl.value : "") });
+        updateCalc(id);
       }
-      if (noteInput) {
-        setLog(noteInput.dataset.note, { n: noteInput.value });
-      }
+    });
+
+    $("#weeks").addEventListener("focusout", (event) => {
+      const field = event.target.closest(".time-min, .time-sec");
+      if (!field) return;
+      const parts = splitTimeParts((state.log[field.dataset.id] || {}).t);
+      const minEl = $(`.time-min[data-id="${field.dataset.id}"]`);
+      const secEl = $(`.time-sec[data-id="${field.dataset.id}"]`);
+      if (minEl) minEl.value = parts.min;
+      if (secEl) secEl.value = parts.sec;
+    });
+
+    document.addEventListener("focusin", (event) => {
+      const field = event.target.closest(".time-min, .time-sec");
+      if (!field) return;
+      const selectAll = () => {
+        if (typeof field.select === "function") field.select();
+        try { field.setSelectionRange(0, field.value.length); } catch (err) { /* pole może nie wspierać */ }
+      };
+      selectAll();
     });
 
     $("#weeks").addEventListener("toggle", (event) => {

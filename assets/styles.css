@@ -837,6 +837,11 @@ a { color: inherit; }
 
 .field input::placeholder { color: var(--muted); font-weight: 400; }
 
+.field-time input { width: 30px; text-align: center; }
+.field-time input.time-min { width: 34px; }
+.field-time .time-pair { display: inline-flex; align-items: center; gap: 1px; }
+.time-colon { color: var(--muted); font-weight: 600; }
+
 .calc-pace {
   font-size: .74rem;
   color: var(--green);
@@ -844,17 +849,19 @@ a { color: inherit; }
   font-variant-numeric: tabular-nums;
 }
 
-.note-field {
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: var(--surface-2);
-  font-size: .78rem;
-  outline: none;
-}
+.calc-pace.is-plan { color: var(--muted); font-weight: 500; }
 
-.note-field:focus { border-color: var(--line-strong); }
+/* Pola czasu w dialogu statów */
+.input-block .time-pair { display: flex; align-items: center; gap: 6px; }
+.input-block .time-pair .time-colon { font-size: .9rem; }
+.input-block .time-pair .time-min { width: 76px; }
+.input-block .time-pair .time-sec { width: 64px; }
+
+@media (max-width: 640px) {
+  /* < 16px powoduje auto-zoom pola na iOS */
+  .field input { font-size: 16px; }
+  .field-time input.time-min { width: 38px; }
+}
 
 /* Strava inside workout */
 .wo-strava { margin: 10px 0 0 41px; }
