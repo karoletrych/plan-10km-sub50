@@ -455,18 +455,58 @@
     return `<span class="now-dot"></span> Tydzień <strong>${week} z 9</strong> · dziś ${DAY_NAMES[today.getDay()]}`;
   }
 
-  function actualDistanceMeters(workout) {
-    const ms = state.manualStats[workout.id];
-    if (ms && ms.distance) return ms.distance;
+  function matchedActivityFor(workout) {
     const linkedId = state.links[workout.id];
     if (linkedId) {
       const linked = state.strava.activities.find((a) => String(a.id) === String(linkedId));
-      return linked && linked.distance ? linked.distance : null;
+      return linked || null;
     }
     const date = workoutDate(workout);
     if (!date) return null;
     const match = findActivityForDate(toISODate(date), state.strava.activities, new Set());
-    return match && match.a.distance ? match.a.distance : null;
+    return match ? match.a : null;
+  }
+
+  function actualDistanceMeters(workout) {
+    const ms = state.manualStats[workout.id];
+    if (ms && ms.distance) return ms.distance;
+    const activity = matchedActivityFor(workout);
+    return activity && activity.distance ? activity.distance : null;
+  }
+
+  /* Stare wpisy czasu potrafią być śmieciowe (np. wpisane "99" = 99 minut).
+     Naprawiamy tylko wartości absurdalne — powyżej 15:00/km, czyli wolniejsze od marszu. */
+  function repairLegacyTimes() {
+    let changed = false;
+    WORKOUTS.forEach((w) => {
+      const log = state.log[w.id];
+      if (!log || !log.t) return;
+      const seconds = parseTimeInput(log.t);
+      if (!seconds) {
+        delete log.t;
+        changed = true;
+        return;
+      }
+      const meters = actualDistanceMeters(w);
+      const km = meters ? meters / 1000 : w.km;
+      if (!km) return;
+      if (seconds / km <= 15 * 60) return;
+      const activity = matchedActivityFor(w);
+      if (activity && activity.moving_time && activity.distance) {
+        const activityPace = activity.moving_time / (activity.distance / 1000);
+        if (activityPace <= 15 * 60) {
+          log.t = fmtDuration(activity.moving_time);
+          changed = true;
+          return;
+        }
+      }
+      delete log.t;
+      changed = true;
+    });
+    if (changed) {
+      saveState(true);
+      toast("Poprawiono zapisane czasy, które wyglądały na literówkę.");
+    }
   }
 
   function updateCalc(id) {
@@ -1424,6 +1464,7 @@
         };
         saveState(true);
         $("#start-date").value = state.start || "";
+        repairLegacyTimes();
         renderWeeks();
         refreshProgress();
         renderStravaPanel();
@@ -1682,6 +1723,7 @@
     renderPaces();
     renderSchedule();
     renderRules();
+    repairLegacyTimes();
     renderWeeks();
 
     $("#start-date").value = state.start || "";
