@@ -426,7 +426,7 @@
       const check = $(".check", card);
       if (check) check.setAttribute("aria-pressed", String(isDone));
       const log = $(`[data-log="${w.id}"]`, card);
-      if (log) log.hidden = !isDone;
+      if (log) log.hidden = !isDone || hasStatsFor(w);
       updateCalc(w.id);
     });
 
@@ -472,6 +472,13 @@
     if (ms && ms.distance) return ms.distance;
     const activity = matchedActivityFor(workout);
     return activity && activity.distance ? activity.distance : null;
+  }
+
+  function hasStatsFor(workout) {
+    const ms = state.manualStats[workout.id];
+    if (ms && ms.distance && ms.moving_time) return true;
+    const activity = matchedActivityFor(workout);
+    return Boolean(activity && activity.distance && activity.moving_time);
   }
 
   /* Stare wpisy czasu potrafią być śmieciowe (np. wpisane "99" = 99 minut).
