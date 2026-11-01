@@ -463,7 +463,7 @@
     }
     const date = workoutDate(workout);
     if (!date) return null;
-    const match = findActivityForDate(toISODate(date), state.strava.activities, new Set());
+    const match = findActivityForDate(toISODate(date), state.strava.activities, new Set(), workout);
     return match ? match.a : null;
   }
 
@@ -574,6 +574,10 @@
 
   function mergePinned(activities) {
     const list = Array.isArray(activities) ? activities.slice() : [];
+    const pinnedIds = new Set((PLAN.pinned || []).map((p) => String(p.id)));
+    list.forEach((a) => {
+      if (pinnedIds.has(String(a.id))) a.pinned = true;
+    });
     (PLAN.pinned || []).forEach((pinned) => {
       if (!list.some((a) => String(a.id) === String(pinned.id))) {
         list.push(Object.assign({ pinned: true }, pinned));
@@ -602,12 +606,21 @@
     </div>`;
   }
 
-  function findActivityForDate(iso, activities, used) {
+  function activityFitsWorkout(workout, activity) {
+    if (!activity.distance || !workout.km) return true;
+    const km = activity.distance / 1000;
+    // Długi bieg (np. 12 km) nie może udawać krótkiego treningu (5 km).
+    return km <= workout.km * 1.5 + 1;
+  }
+
+  function findActivityForDate(iso, activities, used, workout) {
     const target = parseISODate(iso);
     if (!target) return null;
     let best = null;
     activities.forEach((a) => {
       if (used.has(String(a.id))) return;
+      if (a.pinned) return;
+      if (workout && !activityFitsWorkout(workout, a)) return;
       const d = parseISODate(activityDate(a));
       if (!d) return;
       const diff = Math.round((d - target) / 86400000);
@@ -638,7 +651,7 @@
       if (map[w.id] || !state.start) return;
       const date = workoutDate(w);
       if (!date) return;
-      const match = findActivityForDate(toISODate(date), state.strava.activities, used);
+      const match = findActivityForDate(toISODate(date), state.strava.activities, used, w);
       if (match) {
         map[w.id] = { manualId: null, activity: match.a, auto: true, diff: match.diff };
         used.add(String(match.a.id));
@@ -1081,7 +1094,7 @@
           if (state.links[w.id]) return;
           const day = workoutDate(w);
           if (!day) return;
-          const match = findActivityForDate(toISODate(day), fresh, used);
+          const match = findActivityForDate(toISODate(day), fresh, used, w);
           if (!match) return;
           used.add(String(match.a.id));
           if (markWorkoutDoneFromActivity(w, match.a)) completed++;
@@ -1690,7 +1703,7 @@
       if (state.links[w.id]) return;
       const date = workoutDate(w);
       if (!date) return;
-      const match = findActivityForDate(toISODate(date), state.strava.activities, used);
+      const match = findActivityForDate(toISODate(date), state.strava.activities, used, w);
       if (!match) return;
       used.add(String(match.a.id));
       if (markWorkoutDoneFromActivity(w, match.a)) completed++;
