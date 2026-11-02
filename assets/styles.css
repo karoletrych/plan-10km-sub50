@@ -236,6 +236,24 @@ a { color: inherit; }
   color: rgb(255 255 255 / .72);
 }
 
+.pc-share { margin-top: 10px; }
+
+.copy-results-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border-radius: 9px;
+  border: 1px solid rgb(255 255 255 / .22);
+  background: rgb(255 255 255 / .07);
+  color: #fff;
+  font-size: .76rem;
+  font-weight: 650;
+}
+
+.copy-results-btn:hover { background: rgb(255 255 255 / .14); }
+.copy-results-btn svg { width: 13px; height: 13px; }
+
 .week-now { display: block; min-height: 22px; line-height: 1.4; }
 .week-now strong { color: #fff; font-weight: 700; white-space: nowrap; }
 .week-now .now-dot {

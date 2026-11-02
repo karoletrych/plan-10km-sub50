@@ -1439,6 +1439,82 @@
     toast("Staty usunięte.");
   }
 
+  /* ---------- Kopiowanie wyników ---------- */
+
+  function workoutResult(workout) {
+    const ms = state.manualStats[workout.id];
+    if (ms && ms.distance && ms.moving_time) {
+      return { distance: ms.distance, time: ms.moving_time };
+    }
+    const activity = matchedActivityFor(workout);
+    if (activity && activity.distance && activity.moving_time) {
+      return { distance: activity.distance, time: activity.moving_time };
+    }
+    const seconds = parseTimeInput((state.log[workout.id] || {}).t);
+    return { distance: null, time: seconds || null };
+  }
+
+  function resultsSummaryText() {
+    const done = WORKOUTS.filter((w) => state.done[w.id]);
+    let totalMeters = 0;
+    let totalSeconds = 0;
+    done.forEach((w) => {
+      const r = workoutResult(w);
+      if (r.distance) totalMeters += r.distance;
+      if (r.time) totalSeconds += r.time;
+    });
+
+    const lines = ["Karol Sportowy Dzik · 10 km sub 50"];
+    const totals = [done.length + "/" + TOTAL + " treningów"];
+    if (totalMeters) totals.push(fmtKm(totalMeters));
+    if (totalSeconds) totals.push(fmtDuration(totalSeconds));
+    lines.push(totals.join(" · "));
+
+    done.forEach((w) => {
+      const r = workoutResult(w);
+      const date = workoutDate(w);
+      const when = date
+        ? date.getDate() + "." + String(date.getMonth() + 1).padStart(2, "0")
+        : "";
+      const parts = [];
+      if (r.distance) parts.push(fmtKm(r.distance));
+      if (r.time) parts.push(fmtDuration(r.time));
+      if (r.distance && r.time) parts.push(fmtPace(r.time / (r.distance / 1000)) + "/km");
+      if (!parts.length) parts.push("zrobione");
+      lines.push("• " + (when ? when + " · " : "") + w.title + " — " + parts.join(" · "));
+    });
+
+    if (!done.length) lines.push("Brak ukończonych treningów.");
+    return lines.join("\n");
+  }
+
+  function fallbackCopy(text, message) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.top = "-1000px";
+    document.body.appendChild(area);
+    area.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+    area.remove();
+    if (ok) toast(message);
+    else window.prompt("Skopiuj wyniki:", text);
+  }
+
+  function copyResults() {
+    const text = resultsSummaryText();
+    const message = "Wyniki skopiowane do schowka.";
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => toast(message))
+        .catch(() => fallbackCopy(text, message));
+      return;
+    }
+    fallbackCopy(text, message);
+  }
+
   /* ---------- Eksport / import ---------- */
 
   function exportData() {
@@ -1629,6 +1705,7 @@
         }
       }
       if (event.target.closest('[data-action="export"]')) exportData();
+      if (event.target.closest('[data-action="copy-results"]')) copyResults();
       if (event.target.closest('[data-action="import"]')) $("#import-file").click();
       if (event.target.closest('[data-action="reset"]')) resetData();
     });
