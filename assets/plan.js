@@ -2,27 +2,27 @@
 window.PLAN = {
   title: "10 km poniżej 50:00",
   subtitle: "9 tygodni · 3 biegi w tygodniu · czwartkowa ścianka",
-  goal: "Realny cel: zejść poniżej 50 minut, budując formę po przerwie — bez nadrabiania szybkości na siłę.",
+  goal: "Cel: złamać 50 minut. Plan jest ułożony pod ten cel — z testem 5 km w 4. tygodniu i rosnącą pracą w 5:10. Jeśli test wyjdzie poniżej 24:30, atakujemy sub-50; jeśli nie, korygujemy tempa, nie ambicję.",
 
   paces: [
     {
-      name: "Bieg spokojny i długi",
-      value: "6:10–7:00 min/km",
-      desc: "Wysiłek 3–4/10. Możesz rozmawiać pełnymi zdaniami.",
+      name: "Bieg spokojny",
+      value: "6:20–6:45 min/km",
+      desc: "Wysiłek 3–4/10. Możesz rozmawiać pełnymi zdaniami. Nie przyspieszaj.",
       tone: "green",
       icon: "heart"
     },
     {
       name: "Tempo progowe",
-      value: "5:15–5:30 min/km",
-      desc: "Wysiłek 6–7/10. Wymagające, ale kontrolowane.",
+      value: "5:10–5:20 min/km",
+      desc: "Wysiłek 6–7/10. Mocno, ale kontrolowanie — bez walki o życie.",
       tone: "orange",
       icon: "pulse"
     },
     {
       name: "Tempo docelowe na 10 km",
       value: "4:59 min/km",
-      desc: "Tego tempa nie wymuszamy na początku planu.",
+      desc: "Tempo startowe. Pojawia się w krótkich odcinkach — nie wymuszamy go na całym treningu.",
       tone: "blue",
       icon: "bolt"
     }
@@ -41,91 +41,90 @@ window.PLAN = {
   weeks: [
     {
       n: 1,
-      title: "Powrót do regularności",
-      volume: "ok. 17 km",
+      title: "Powrót do rytmu",
+      volume: "ok. 18 km",
       workouts: [
         {
-          id: "w1-1", day: "Poniedziałek", title: "5 km spokojnie", type: "easy",
-          distance: "5 km", km: 5, pace: "6:15–7:00 min/km",
+          id: "w1-1", day: "Poniedziałek", title: "6 km spokojnie + przebieżki", type: "easy",
+          distance: "6 km", km: 6, pace: "6:20–6:45 min/km",
           bullets: [
-            "Bez przyspieszeń i bez kończenia biegu na maksa.",
-            "Bieg ma być łatwy — to budowanie nawyku, nie test formy."
+            "Bieg spokojny, rozmowny — bez patrzenia na tempo co kilometr.",
+            "Na koniec 4 × 20 sekund luźnych przebieżek, 60 sekund marszu między nimi."
           ],
-          goal: "Przyzwyczaić nogi do regularnych obciążeń."
+          goal: "Wrócić do regularności i obudzić nogi."
         },
         {
           id: "w1-2", day: "Środa", title: "5 km spokojnie", type: "easy",
-          distance: "5 km", km: 5, pace: "6:15–7:00 min/km",
+          distance: "5 km", km: 5, pace: "6:20–6:45 min/km",
           bullets: [
-            "Bez dodatkowych akcentów.",
+            "Bez przyspieszeń.",
             "Zostaw świeżość na czwartkową ściankę."
           ],
-          goal: "Spokojne drugie wyjście w tygodniu, bez kumulowania zmęczenia."
+          goal: "Spokojne drugie wyjście w tygodniu."
         },
         {
           id: "w1-3", day: "Sobota", title: "7 km spokojnie", type: "easy",
-          distance: "7 km", km: 7, pace: "6:15–7:00 min/km",
+          distance: "7 km", km: 7, pace: "6:20–6:45 min/km",
           bullets: [
             "Równe, komfortowe tempo przez cały dystans.",
             "Nie sprawdzaj na końcu, ile masz w nogach."
           ],
-          goal: "Podtrzymanie wytrzymałości — masz zakończyć z poczuciem, że mógłbyś pobiec dalej."
+          goal: "Zbudować czas na nogach."
         }
       ]
     },
     {
       n: 2,
-      title: "Pierwsze przebieżki",
-      volume: "ok. 19 km",
+      title: "Baza i przebieżki",
+      volume: "ok. 20 km",
       workouts: [
         {
-          id: "w2-1", day: "Poniedziałek", title: "5,5 km spokojnie", type: "easy",
-          distance: "5,5 km", km: 5.5, pace: "6:10–7:00 min/km",
+          id: "w2-1", day: "Poniedziałek", title: "6 km spokojnie + przebieżki", type: "easy",
+          distance: "6 km", km: 6, pace: "6:20–6:45 min/km",
           bullets: [
-            "Na koniec 4 × 15 sekund luźnego przyspieszenia.",
-            "Po każdym przyspieszeniu 60–90 sekund marszu lub truchtu."
+            "Spokojny bieg.",
+            "Na koniec 4 × 20 sekund przebieżek, 60 sekund marszu."
           ],
-          goal: "Spokojny bieg z lekkim pobudzeniem nóg."
+          goal: "Utrzymać rytm i lekkość kroku."
         },
         {
-          id: "w2-2", day: "Środa", title: "5,5 km spokojnie", type: "easy",
-          distance: "5,5 km", km: 5.5, pace: "6:15–7:00 min/km",
+          id: "w2-2", day: "Środa", title: "6 km spokojnie", type: "easy",
+          distance: "6 km", km: 6, pace: "6:20–6:45 min/km",
           bullets: [
-            "Bez dodatkowych interwałów.",
+            "Bez akcentów.",
             "Bieg ma być lekki."
           ],
-          goal: "Spokojne drugie wyjście w tygodniu."
+          goal: "Spokojne wyjście między akcentami."
         },
         {
           id: "w2-3", day: "Sobota", title: "8 km spokojnie", type: "easy",
-          distance: "8 km", km: 8, pace: "6:15–7:00 min/km",
+          distance: "8 km", km: 8, pace: "6:20–6:45 min/km",
           bullets: [
             "Nie walka o tempo — liczy się czas na nogach.",
-            "Jeśli tempo 6:15/km nie pozwala rozmawiać, zwolnij."
+            "Jeśli 6:20 nie pozwala rozmawiać, zwolnij."
           ],
-          goal: "Zwiększyć czas spędzany na nogach."
+          goal: "Zwiększyć wytrzymałość."
         }
       ]
     },
     {
       n: 3,
-      title: "Pierwsza praca nad szybkością",
-      volume: "ok. 20–21 km",
+      title: "Pierwszy próg",
+      volume: "ok. 23 km",
       workouts: [
         {
-          id: "w3-1", day: "Poniedziałek", title: "6,5 km, w tym 6 × 1 minuta szybciej", type: "quality",
-          distance: "6,5 km", km: 6.5, pace: "5:00–5:20 min/km",
+          id: "w3-1", day: "Poniedziałek", title: "8 km, w tym 4 × 1 km progowo", type: "quality",
+          distance: "8 km", km: 8, pace: "odcinki 5:15–5:20 min/km",
           bullets: [
-            "Rozgrzewka: 1,5 km lekkiego biegu.",
-            "6 × 1 minuta w tempie około 5:00–5:20 min/km, ale bez sprintu.",
-            "Po każdym odcinku 2 minuty bardzo wolnego truchtu.",
-            "Dokończ spokojnie do 6,5 km."
+            "2 km rozgrzewki.",
+            "4 × 1 km w 5:15–5:20, 90 sekund truchtu między odcinkami.",
+            "1–2 km schłodzenia."
           ],
-          goal: "Ponownie przyzwyczaić organizm do szybszego biegania, a nie sprawdzać rekord."
+          goal: "Pierwszy kontakt z tempem progowym."
         },
         {
-          id: "w3-2", day: "Środa", title: "5,5 km spokojnie", type: "easy",
-          distance: "5,5 km", km: 5.5, pace: "6:15–7:00 min/km",
+          id: "w3-2", day: "Środa", title: "6 km spokojnie", type: "easy",
+          distance: "6 km", km: 6, pace: "6:20–6:45 min/km",
           bullets: [
             "Bez przyspieszeń.",
             "Zostaw świeżość na ściankę."
@@ -133,180 +132,177 @@ window.PLAN = {
           goal: "Spokojny bieg bez kumulowania zmęczenia."
         },
         {
-          id: "w3-3", day: "Sobota", title: "8,5 km spokojnie", type: "easy",
-          distance: "8,5 km", km: 8.5, pace: "6:15–7:00 min/km",
+          id: "w3-3", day: "Sobota", title: "9 km spokojnie", type: "easy",
+          distance: "9 km", km: 9, pace: "6:20–6:45 min/km",
           bullets: [
-            "Trzymaj równe, komfortowe tempo przez cały dystans."
+            "Trzymaj równe, komfortowe tempo."
           ],
-          goal: "Budowanie wytrzymałości bez walki o tempo."
+          goal: "Budowanie wytrzymałości."
         }
       ]
     },
     {
       n: 4,
-      title: "Lżejszy tydzień",
-      volume: "ok. 19 km",
+      title: "Test 5 km",
+      volume: "ok. 22 km",
       workouts: [
         {
-          id: "w4-1", day: "Poniedziałek", title: "5,5 km spokojnie", type: "easy",
-          distance: "5,5 km", km: 5.5, pace: "6:15–7:00 min/km",
+          id: "w4-1", day: "Poniedziałek", title: "6 km spokojnie + przebieżki", type: "easy",
+          distance: "6 km", km: 6, pace: "6:20–6:45 min/km",
           bullets: [
-            "Jeśli nogi są wypoczęte, zakończ 4 × 15 sekundami luźnych przebieżek."
+            "Spokojny bieg.",
+            "4 × 20 sekund przebieżek na koniec."
           ],
-          goal: "Spokojny bieg w lżejszym tygodniu."
+          goal: "Lekko przed testem."
         },
         {
-          id: "w4-2", day: "Środa", title: "6 km, w tym 6 × 1 minuta szybciej", type: "quality",
-          distance: "6 km", km: 6, pace: "4:55–5:10 min/km",
+          id: "w4-2", day: "Środa", title: "Test 5 km", type: "quality",
+          distance: "5 km + rozgrzewka", km: 8, pace: "test na maksa",
           bullets: [
-            "1,5 km rozgrzewki.",
-            "6 × 1 minuta w tempie około 4:55–5:10 min/km.",
-            "Po każdym odcinku 90 sekund spokojnego truchtu.",
-            "Resztę dystansu wykonaj spokojnie."
+            "2 km rozgrzewki.",
+            "5 km na maksa — zapisz czas.",
+            "1 km schłodzenia.",
+            "Wynik ≤ 24:30 = jesteś na kursie sub-50."
           ],
-          goal: "Zachować kontakt z szybkością przy mniejszym zmęczeniu."
+          goal: "Sprawdzić, gdzie naprawdę jesteś."
         },
         {
-          id: "w4-3", day: "Sobota", title: "7,5 km spokojnie", type: "easy",
-          distance: "7,5 km", km: 7.5, pace: "6:15–7:00 min/km",
+          id: "w4-3", day: "Sobota", title: "8 km spokojnie", type: "easy",
+          distance: "8 km", km: 8, pace: "6:20–6:45 min/km",
           bullets: [
-            "Krótszy bieg regeneracyjny w stosunku do poprzedniego tygodnia."
+            "Spokojnie, bez sprawdzania formy."
           ],
-          goal: "Lekko domknąć lżejszy tydzień."
+          goal: "Zamknąć lżejszy tydzień."
         }
       ]
     },
     {
       n: 5,
-      title: "Rozwój tempa progowego",
-      volume: "ok. 21–22 km",
+      title: "Próg 2 km",
+      volume: "ok. 26 km",
       workouts: [
         {
-          id: "w5-1", day: "Poniedziałek", title: "7 km, w tym 3 × 6 minut progowo", type: "quality",
-          distance: "7 km", km: 7, pace: "5:15–5:30 min/km",
+          id: "w5-1", day: "Poniedziałek", title: "9 km, w tym 3 × 2 km progowo", type: "quality",
+          distance: "9 km", km: 9, pace: "odcinki 5:10–5:15 min/km",
           bullets: [
-            "1,5 km rozgrzewki.",
-            "3 × 6 minut w tempie 5:15–5:30 min/km.",
-            "Pomiędzy odcinkami 2 minuty truchtu.",
-            "Schłodzenie do łącznego dystansu około 7 km."
+            "2 km rozgrzewki.",
+            "3 × 2 km w 5:10–5:15, 2 minuty truchtu.",
+            "1 km schłodzenia."
           ],
-          goal: "Poprawić zdolność utrzymywania mocnego, równomiernego wysiłku."
+          goal: "Wydłużyć pracę w tempie progowym."
         },
         {
-          id: "w5-2", day: "Środa", title: "5,5 km spokojnie", type: "easy",
-          distance: "5,5 km", km: 5.5, pace: "6:15–7:00 min/km",
+          id: "w5-2", day: "Środa", title: "7 km spokojnie", type: "easy",
+          distance: "7 km", km: 7, pace: "6:20–6:45 min/km",
           bullets: [
             "Bez szybkich odcinków."
           ],
           goal: "Spokojne wyjście między akcentami."
         },
         {
-          id: "w5-3", day: "Sobota", title: "9 km spokojnie", type: "easy",
-          distance: "9 km", km: 9, pace: "6:15–7:00 min/km",
+          id: "w5-3", day: "Sobota", title: "10 km spokojnie", type: "easy",
+          distance: "10 km", km: 10, pace: "6:20–6:45 min/km",
           bullets: [
-            "Nie przyspieszaj na końcu tylko po to, żeby sprawdzić formę."
+            "Nie przyspieszaj na końcu po to, żeby sprawdzić formę."
           ],
-          goal: "Wytrzymałość — bez testowania się na siłę."
+          goal: "Wytrzymałość bez ścigania."
         }
       ]
     },
     {
       n: 6,
-      title: "Interwały w tempie zbliżonym do startowego",
-      volume: "ok. 23 km",
+      title: "Próg 3 km",
+      volume: "ok. 26 km",
       workouts: [
         {
-          id: "w6-1", day: "Poniedziałek", title: "ok. 8 km, w tym 5 × 800 m", type: "quality",
-          distance: "8 km", km: 8, pace: "5:00–5:10 min/km",
+          id: "w6-1", day: "Poniedziałek", title: "9 km, w tym 2 × 3 km progowo", type: "quality",
+          distance: "9 km", km: 9, pace: "odcinki 5:10 min/km",
           bullets: [
-            "1,5 km rozgrzewki.",
-            "5 × 800 m w tempie 5:00–5:10 min/km.",
-            "Po każdym odcinku około 2–2,5 minuty spokojnego truchtu.",
-            "Schłodzenie do łącznego dystansu około 8 km."
+            "2 km rozgrzewki.",
+            "2 × 3 km w 5:10, 3 minuty truchtu.",
+            "1 km schłodzenia."
           ],
-          goal: "Oswoić się z tempem docelowym bez biegania całych 5 km na granicy możliwości."
+          goal: "Utrzymać tempo pod zmęczeniem."
         },
         {
-          id: "w6-2", day: "Środa", title: "5,5 km spokojnie", type: "easy",
-          distance: "5,5 km", km: 5.5, pace: "6:15–7:00 min/km",
+          id: "w6-2", day: "Środa", title: "6 km spokojnie", type: "easy",
+          distance: "6 km", km: 6, pace: "6:20–6:45 min/km",
           bullets: [
             "Zachowaj lekkość kroku."
           ],
           goal: "Regeneracja między mocniejszymi jednostkami."
         },
         {
-          id: "w6-3", day: "Sobota", title: "9,5 km spokojnie", type: "easy",
-          distance: "9,5 km", km: 9.5, pace: "6:15–7:00 min/km",
+          id: "w6-3", day: "Sobota", title: "11 km z finiszem", type: "easy",
+          distance: "11 km", km: 11, pace: "6:20–6:45; ostatnie 2 km 5:20",
           bullets: [
-            "Nie rób z tego biegu testu na 10 km.",
-            "Liczy się wytrzymałość."
+            "Spokojnie do 9 km.",
+            "Ostatnie 2 km w 5:20."
           ],
-          goal: "Spokojne wydłużenie długiego biegu."
+          goal: "Nauczyć się biegać szybciej na zmęczonych nogach."
         }
       ]
     },
     {
       n: 7,
-      title: "Najmocniejszy tydzień wytrzymałościowy",
-      volume: "ok. 23–24 km",
+      title: "Najdłuższy tydzień",
+      volume: "ok. 29 km",
       workouts: [
         {
-          id: "w7-1", day: "Poniedziałek", title: "7,5–8 km, w tym 2 × 10 minut progowo", type: "quality",
-          distance: "7,5–8 km", km: 7.75, pace: "5:10–5:25 min/km",
+          id: "w7-1", day: "Poniedziałek", title: "11 km, w tym 2 × 4 km progowo", type: "quality",
+          distance: "11 km", km: 11, pace: "odcinki 5:10 min/km",
           bullets: [
-            "1,5 km rozgrzewki.",
-            "2 × 10 minut w tempie 5:10–5:25 min/km.",
-            "Przerwa: 3 minuty spokojnego truchtu.",
-            "Schłodzenie do łącznego dystansu 7,5–8 km."
+            "2 km rozgrzewki.",
+            "2 × 4 km w 5:10, 4 minuty truchtu.",
+            "1 km schłodzenia."
           ],
-          goal: "Utrzymać wymagające tempo przez dłuższy czas. Jeśli musisz mocno walczyć o każdą minutę, zwolnij."
+          goal: "Najmocniejszy akcent w planie."
         },
         {
-          id: "w7-2", day: "Środa", title: "5,5 km spokojnie", type: "easy",
-          distance: "5,5 km", km: 5.5, pace: "6:15–7:00 min/km",
+          id: "w7-2", day: "Środa", title: "6 km spokojnie", type: "easy",
+          distance: "6 km", km: 6, pace: "6:20–6:45 min/km",
           bullets: [
-            "Nie dokładaj kolejnego akcentu."
+            "Bez dokładania akcentów."
           ],
-          goal: "Spokojnie, przed sobotnim długim biegiem."
+          goal: "Spokojnie przed długim biegiem."
         },
         {
-          id: "w7-3", day: "Sobota", title: "10 km spokojnie", type: "easy",
-          distance: "10 km", km: 10, pace: "6:15–7:00 min/km",
+          id: "w7-3", day: "Sobota", title: "12 km z finiszem", type: "easy",
+          distance: "12 km", km: 12, pace: "6:20–6:45; ostatnie 3 km 5:15",
           bullets: [
-            "Pierwsze 8 km szczególnie spokojnie.",
-            "Celem jest komfortowe ukończenie 10 km, a nie wynik."
+            "Spokojnie do 9 km.",
+            "Ostatnie 3 km w 5:15."
           ],
-          goal: "Najdłuższy bieg w planie — komfortowo, bez ścigania."
+          goal: "Najdłuższy bieg i symulacja końcówki."
         }
       ]
     },
     {
       n: 8,
-      title: "Próba tempa startowego",
-      volume: "ok. 21–22 km",
+      title: "Rzeźbienie tempa",
+      volume: "ok. 22 km",
       workouts: [
         {
-          id: "w8-1", day: "Poniedziałek", title: "ok. 8 km, w tym 4 × 1 km", type: "quality",
-          distance: "8 km", km: 8, pace: "4:55–5:00 min/km",
+          id: "w8-1", day: "Poniedziałek", title: "7 km, w tym 4 × 1 km w tempie startowym", type: "quality",
+          distance: "7 km", km: 7, pace: "odcinki 4:55–5:00 min/km",
           bullets: [
-            "1,5 km rozgrzewki.",
-            "4 × 1 km w tempie 4:55–5:00 min/km.",
-            "Po każdym kilometrze 2 minuty truchtu.",
-            "Schłodzenie do około 8 km łącznie."
+            "2 km rozgrzewki.",
+            "4 × 1 km w 4:55–5:00, 2 minuty truchtu.",
+            "1 km schłodzenia."
           ],
-          goal: "Najważniejszy sprawdzian przed startem. Każdy odcinek mocny, ale kontrolowany — jeśli tempo wymaga dużego wysiłku, biegnij wolniej."
+          goal: "Oswoić tempo startowe."
         },
         {
-          id: "w8-2", day: "Środa", title: "5,5 km spokojnie", type: "easy",
-          distance: "5,5 km", km: 5.5, pace: "6:15–7:00 min/km",
+          id: "w8-2", day: "Środa", title: "6 km spokojnie", type: "easy",
+          distance: "6 km", km: 6, pace: "6:20–6:45 min/km",
           bullets: [
             "Na koniec 4 × 15 sekund luźnych przebieżek."
           ],
           goal: "Lekko, z krótkim pobudzeniem nóg."
         },
         {
-          id: "w8-3", day: "Sobota", title: "8 km spokojnie", type: "easy",
-          distance: "8 km", km: 8, pace: "6:15–7:00 min/km",
+          id: "w8-3", day: "Sobota", title: "9 km spokojnie", type: "easy",
+          distance: "9 km", km: 9, pace: "6:20–6:45 min/km",
           bullets: [
             "Nie zwiększaj dystansu ani intensywności."
           ],
@@ -320,36 +316,35 @@ window.PLAN = {
       volume: "plus start na 10 km",
       workouts: [
         {
-          id: "w9-1", day: "Poniedziałek", title: "4,5 km spokojnie", type: "easy",
-          distance: "4,5 km", km: 4.5, pace: "6:15–7:00 min/km",
+          id: "w9-1", day: "Poniedziałek", title: "5 km spokojnie + przebieżki", type: "easy",
+          distance: "5 km", km: 5, pace: "6:20–6:45 min/km",
           bullets: [
-            "Na koniec 4 × 15 sekund luźnych przebieżek.",
-            "Wszystko ma być lekkie."
+            "Wszystko ma być lekkie.",
+            "Na koniec 4 × 20 sekund przebieżek."
           ],
           goal: "Pobudzić nogi, nie zmęczyć ich."
         },
         {
-          id: "w9-2", day: "Środa", title: "4 km, w tym 3 × 2 minuty w tempie startowym", type: "quality",
-          distance: "4 km", km: 4, pace: "4:55–5:00 min/km",
+          id: "w9-2", day: "Środa", title: "5 km, w tym 2 × 1 km w tempie startowym", type: "quality",
+          distance: "5 km", km: 5, pace: "odcinki 5:00 min/km",
           bullets: [
-            "Około 1 km rozgrzewki.",
-            "3 × 2 minuty w tempie 4:55–5:00 min/km.",
-            "Po każdym odcinku 2 minuty spokojnego truchtu.",
-            "Resztę dystansu przebiegnij lekko."
+            "2 km rozgrzewki.",
+            "2 × 1 km w 5:00, 2 minuty truchtu.",
+            "1 km schłodzenia."
           ],
-          goal: "Pobudzenie nóg przed startem, bez zmęczenia."
+          goal: "Przypomnieć sobie tempo startowe, bez zmęczenia."
         },
         {
           id: "w9-3", day: "Sobota", title: "Start na 10 km", type: "race",
           distance: "10 km", km: 10, pace: "cel: poniżej 50:00",
           bullets: [
             "Przed startem 10–15 minut lekkiej rozgrzewki i kilka krótkich przebieżek.",
-            "Nie zaczynaj pierwszego kilometra tempem 4:40/km, nawet jeśli czujesz się świetnie."
+            "Nie zaczynaj szybciej niż 5:05/km, nawet jeśli czujesz się świetnie."
           ],
           goal: "Cel: poniżej 50:00.",
           race: [
-            { split: "Km 1–2", target: "ok. 5:03/km" },
-            { split: "Km 3–7", target: "ok. 4:59/km" },
+            { split: "Km 1–2", target: "ok. 5:05/km" },
+            { split: "Km 3–7", target: "ok. 5:00/km" },
             { split: "Km 8–9", target: "ok. 4:55/km" },
             { split: "Km 10", target: "najmocniej, jak dasz radę" }
           ]
@@ -359,7 +354,7 @@ window.PLAN = {
   ],
 
   rules: [
-    "Jeśli nie możesz przebiec szybkich odcinków w kontrolowany sposób, biegnij je wolniej.",
+    "Jeśli nie możesz utrzymać założeń tempa w kontrolowany sposób, zwolnij — lepszy wolniejszy trening niż wymuszony.",
     "Jeżeli ból narasta podczas biegu, zmienia krok albo utrzymuje się przez kolejne dni, przerwij progresję. Nie przechodź automatycznie do następnego tygodnia.",
     "Po ciężkiej ściance, szczególnie z mocnymi wysokimi stopniami i dynamiczną pracą nóg, dostosuj środowy bieg do samopoczucia.",
     "Jeżeli trening nie wszedł, nie nadrabiaj go następnego dnia."
@@ -372,7 +367,7 @@ window.PLAN = {
     "W tygodniu z bardzo mocną ścianką nie dokładaj akcentu biegowego — plan i tak ma zapas."
   ],
 
-  outro: "Plan jest ustawiony tak, żeby dać realną szansę na sub-50 bez udawania, że po czterech miesiącach przerwy forma jest taka sama jak przy rekordzie. Najważniejsze będzie to, czy w tygodniach 6–8 utrzymasz tempa bez nadmiernego wysiłku."
+  outro: "Plan jest ułożony pod sub-50, ale nie obiecuje go na papierze. Test 5 km w 4. tygodniu powie, czy jesteś na kursie. Jeśli tak — nie zmieniamy nic. Jeśli nie — korygujemy tempa, nie ambicję."
 };
 
 /* Bieg poza planem podpięty na stałe (staty dociągnie Strava API) */
